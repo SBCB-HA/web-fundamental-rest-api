@@ -15,9 +15,10 @@ npm ci
 If `.env` does not exist, copy `.env.example` to `.env`. Generate a secret with `openssl rand -hex 32` and assign the result to `JWT_SECRET`. To test admin access, configure both `ADMIN_EMAIL` and `ADMIN_PASSWORD`; see the design document for details. Do not commit `.env`.
 
 ```bash
-npm run build
 npm start
 ```
+
+`npm start` compiles the current TypeScript source before launching the server. If compilation fails, the application does not start; stale checked-in `dist` files are never used as a fallback. Build dependencies must be installed, so use `npm ci` without omitting devDependencies.
 
 Default server URL: `http://localhost:3000`. API prefix: `/api/v1`.
 

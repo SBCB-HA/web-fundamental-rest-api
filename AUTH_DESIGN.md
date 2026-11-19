@@ -219,11 +219,10 @@ ADMIN_PASSWORD=
 `JWT_SECRET` must have a valid value before startup. To test admin access, set a dedicated email and a password of at least eight characters and at most 72 bytes in the admin variables. Do not commit or include real credentials in a PR.
 
 ```bash
-npm run build
 npm start
 ```
 
-The default server URL is `http://localhost:3000`. Stop an older server first to avoid a port conflict. Rebuild after changing TypeScript, or use `npm run start:dev` to build and start; this script does not watch files automatically.
+The default server URL is `http://localhost:3000`. Stop an older server first to avoid a port conflict. `npm start` always builds the current TypeScript source before launching the server. A failed build stops startup instead of running stale output. `npm run start:dev` delegates to the same command and does not watch files automatically. This startup path requires build dependencies, so install with `npm ci` without omitting devDependencies.
 
 `noEmitOnError` prevents new JavaScript output when TypeScript compilation fails. Files under `dist` were already tracked in the original repository and may still appear in Git diffs even though `dist/` is now ignored. Review source changes in `src`; build regenerates their JavaScript output.
 
@@ -237,7 +236,7 @@ npm test
 
 The script compiles TypeScript before running Node's test runner. Tests create a real NestJS application on an ephemeral port and send HTTP requests through the same modules, guards, validation, and middleware as the main application. The test process creates its own secret, admin, and sample users. It does not modify `.env` or stop the reviewer's running server.
 
-Verified on November 19, 2026 (Asia/Bangkok): **23 tests reported by Node's runner, 23 passed, 0 failed**. This total includes a parent test containing 21 HTTP subtests and one separate configuration test; it does not represent 23 independent HTTP scenarios.
+Verified on November 19, 2026 (Asia/Bangkok): **27 tests reported by Node's runner, 27 passed, 0 failed**. This includes 21 HTTP subtests, three startup-path subtests, their two parent tests, and one separate configuration test; it does not represent 27 independent HTTP scenarios.
 
 Verified areas:
 
@@ -254,6 +253,9 @@ Verified areas:
 | HTTP | Empty 204 deletion responses, malformed JSON 400, oversized body 413, authentication and security headers |
 | Rate limiting | Excessive login attempts return 429 and Retry-After |
 | Configuration | Missing/short secret and invalid port rejected by validation |
+| Startup path | Clean dependency installation, stale/missing dist, unauthenticated booking access, and build-failure fallback prevention |
+
+The startup-path regression test installs dependencies with `npm ci` in an isolated directory containing the current source/configuration and the tracked `dist` artifact from `HEAD`. It calls `npm start` directly without an explicit build, checks that all booking methods reject unauthenticated requests, then repeats with no `dist` directory. It also introduces a compilation error and verifies startup fails without falling back to existing JavaScript. Temporary fixtures use their own secrets and ports.
 
 These checks do not replace penetration testing or load testing. Passing tests do not establish that every possible application path is free of defects.
 

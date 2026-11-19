@@ -6,8 +6,8 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc",
-    "start": "node --env-file-if-exists=.env dist/main.js",
-    "start:dev": "npm run build && npm start",
+    "start": "npm run build && node --env-file-if-exists=.env dist/main.js",
+    "start:dev": "npm start",
     "test": "npm run build && node --test test/*.test.cjs"
   },
   "dependencies": {
