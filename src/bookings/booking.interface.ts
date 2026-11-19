@@ -5,4 +5,5 @@ export interface Booking {
     timeSlot: string;
     customerName: string;
     status: string;
+    ownerId: string;
 }

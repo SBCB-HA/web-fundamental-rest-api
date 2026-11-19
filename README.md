@@ -1,64 +1,42 @@
-# Course 3 demo — Booking API (Express, in-memory)
+# Booking API — NestJS Authentication & Authorization
 
-There is no database. Restarting the process drops every booking. There is no login yet: DELETE does not check permission.
+A booking and review API extending the course 4 source with stateless JWT authentication, user/admin roles, and resource ownership checks. Data is stored in memory; no database is required.
 
-Paths match the Booking App slides, prefix `/api/v1`. PUT is extra compared with the Proposed Endpoints table, so the CRUD slide has both replace and partial update.
+**Solution design, authentication flow, rationale, access matrix, and review instructions:** [AUTH_DESIGN.md](AUTH_DESIGN.md).
 
-Student exercise (new resource, do not rebuild these routes): [EXERCISE.md](EXERCISE.md) · [EXERCISE.en.md](EXERCISE.en.md).
+## Running the Application
 
-## Run
+Verified with Node.js v26.13.0. From the repository root:
 
 ```bash
-npm install --registry https://registry.npmjs.org
+npm ci
+```
+
+If `.env` does not exist, copy `.env.example` to `.env`. Generate a secret with `openssl rand -hex 32` and assign the result to `JWT_SECRET`. To test admin access, configure both `ADMIN_EMAIL` and `ADMIN_PASSWORD`; see the design document for details. Do not commit `.env`.
+
+```bash
+npm run build
 npm start
 ```
 
-If `npm install` returns 401, this machine is pointed at an internal registry. The command above installs `express` from the public registry.
+Default server URL: `http://localhost:3000`. API prefix: `/api/v1`.
 
-Server: `http://localhost:3000`
-
-## Try the API
-
-Run these from the `demo` folder. `bkg_001` is the id the server returns from POST. Change the id if you create more than one booking.
+## Testing
 
 ```bash
-curl.exe http://localhost:3000/api/v1/services
-curl.exe http://localhost:3000/api/v1/services/svc_001
-curl.exe http://localhost:3000/api/v1/services/khong-co
-curl.exe -X POST http://localhost:3000/api/v1/bookings -H "Content-Type: application/json" --data-binary "@requests/booking-create.json"
-curl.exe http://localhost:3000/api/v1/bookings
-curl.exe http://localhost:3000/api/v1/bookings/bkg_001
-curl.exe -X PUT http://localhost:3000/api/v1/bookings/bkg_001 -H "Content-Type: application/json" --data-binary "@requests/booking-put.json"
-curl.exe -X PATCH http://localhost:3000/api/v1/bookings/bkg_001 -H "Content-Type: application/json" --data-binary "@requests/booking-patch.json"
-curl.exe -X POST http://localhost:3000/api/v1/bookings -H "Content-Type: application/json" --data-binary "@requests/empty.json"
-curl.exe -X DELETE http://localhost:3000/api/v1/bookings/bkg_001
+npm test
 ```
 
-## Routes
+Import the [Postman collection](requests/auth-authorization.postman_collection.json) to test registration/login for users A and B, resource ownership, validation, and admin access. The collection saves tokens and resource IDs automatically.
 
-| Method | Path | Success | Error |
-|--------|------|---------|-------|
-| GET | `/api/v1/services` | 200 array | |
-| GET | `/api/v1/services/:id` | 200 one service | 404 |
-| POST | `/api/v1/bookings` | 201 booking; server sets `id` and `status: PENDING` | 400 missing field, 404 unknown service |
-| GET | `/api/v1/bookings` | 200 array | |
-| GET | `/api/v1/bookings/:id` | 200 one booking | 404 |
-| PUT | `/api/v1/bookings/:id` | 200; replaces `serviceId`, `date`, `timeSlot`, and `customerName` | 400 missing field, 404 booking or service |
-| PATCH | `/api/v1/bookings/:id` | 200; only the fields sent | 400 empty body, 404 |
-| DELETE | `/api/v1/bookings/:id` | 204 no body | 404 |
+Registration, login, service reads, and review reads are public. Bookings require a Bearer token: users can access only their own bookings, while admins can access all bookings. Updating or deleting a review requires ownership or admin privileges. Only admins can list accounts.
 
-Create-booking body, as on the slide:
+Restarting the server clears users, bookings, and reviews. Register and log in again to obtain a new token. Seeded services: `svc_001` and `svc_002`.
 
-```json
-{
-  "serviceId": "svc_001",
-  "date": "2026-11-15",
-  "timeSlot": "10:00",
-  "customerName": "Alex Nguyen"
-}
-```
+## Original Assignment
 
-Seed: `svc_001`, `svc_002`.
+Resource extension exercise: [EXERCISE.md](EXERCISE.md). The notes below are retained from the previous exercise. The current access matrix and behavior are documented in [AUTH_DESIGN.md](AUTH_DESIGN.md).
+
 ## Exercise answers
 Method	Path	Body	Success	Failure
 GET	/services/:serviceId/reviews	none	200, array of reviews	404 service not found

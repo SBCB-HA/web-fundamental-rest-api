@@ -7,6 +7,8 @@ import {
 
 import { ServicesService } from '../services/services.service.js';
 import type { Review } from './review.interface.js';
+import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface.js';
+import { assertOwnerOrAdmin } from '../auth/resource-access.js';
 
 import type { CreateReviewDto } from './dto/create-review.dto.js';
 import type { ReplaceReviewDto } from './dto/replace-review.dto.js';
@@ -48,11 +50,12 @@ export class ReviewsService {
   }
 
 
-  create(serviceId: string, dto: CreateReviewDto): Review {
+  create(serviceId: string, dto: CreateReviewDto, actor: AuthenticatedUser): Review {
     this.serviceService.findById(serviceId);
     const review: Review = {
       id: 'rev_' + String(this.nextId++).padStart(3, '0'),
       serviceId,
+      ownerId: actor.id,
       authorName: dto.authorName,
       rating: dto.rating,
       comment: dto.comment ?? '',
@@ -62,8 +65,9 @@ export class ReviewsService {
 
     return review;
   }
-  replace(id: string, dto: ReplaceReviewDto): Review {
+  replace(id: string, dto: ReplaceReviewDto, actor: AuthenticatedUser): Review {
     const review = this.findById(id);
+    assertOwnerOrAdmin(review.ownerId, actor);
     review.authorName = dto.authorName;
     review.rating = dto.rating;
     review.comment = dto.comment;
@@ -71,8 +75,9 @@ export class ReviewsService {
     return review;
   }
 
-  update(id: string, dto: UpdateReviewDto): Review {
+  update(id: string, dto: UpdateReviewDto, actor: AuthenticatedUser): Review {
     const review = this.findById(id);
+    assertOwnerOrAdmin(review.ownerId, actor);
 
     const fields: (keyof UpdateReviewDto)[] = [
       'authorName',
@@ -81,7 +86,7 @@ export class ReviewsService {
     ];
 
     const presentFields = fields.filter(
-      field => Object.hasOwn(dto ?? {}, field),
+      field => dto?.[field] !== undefined,
     );
 
     if (presentFields.length === 0) {
@@ -90,22 +95,24 @@ export class ReviewsService {
       );
     }
 
-    if (Object.hasOwn(dto, 'authorName')) {
+    if (dto.authorName !== undefined) {
       review.authorName = dto.authorName!;
     }
 
-    if (Object.hasOwn(dto, 'rating')) {
+    if (dto.rating !== undefined) {
       review.rating = dto.rating!;
     }
 
-    if (Object.hasOwn(dto, 'comment')) {
+    if (dto.comment !== undefined) {
       review.comment = dto.comment!;
     }
 
     return review;
   }
 
-  delete(id: string): void {
+  delete(id: string, actor: AuthenticatedUser): void {
+    const review = this.findById(id);
+    assertOwnerOrAdmin(review.ownerId, actor);
     const index = this.reviews.findIndex(
       item => item.id === id,
     );

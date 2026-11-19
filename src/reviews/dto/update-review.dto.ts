@@ -1,5 +1,6 @@
+import { MaxLength } from 'class-validator';
 
-import {IsString,IsNotEmpty,IsNumber,Min, Max,Matches,ValidateIf,
+import {IsString,IsNotEmpty,IsInt,Min, Max,Matches,ValidateIf,
 } from 'class-validator';
 
 export class UpdateReviewDto {
@@ -7,15 +8,17 @@ export class UpdateReviewDto {
   @IsString()
   @IsNotEmpty()
   @Matches(/\S/)
+  @MaxLength(100)
   authorName?: string;
 
   @ValidateIf((_, value) => value !== undefined)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   @Max(5)
   rating?: number;
 
   @ValidateIf((_, value) => value !== undefined)
   @IsString()
+  @MaxLength(2000)
   comment?: string;
 }

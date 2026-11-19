@@ -62,6 +62,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       );
     }
 
+    if (statusCode === HttpStatus.UNAUTHORIZED) {
+      httpAdapter.setHeader(response, 'WWW-Authenticate', 'Bearer');
+    }
+
     const responseBody = {
       success: false,
       statusCode,
